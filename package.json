@@ -1,0 +1,19 @@
+{
+  "name": "liikennepoliisi",
+  "version": "0.0.1",
+  "description": "Animal Crossingin Dodo Code -jono",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/msaari/liikennepoliisi.git"
+  },
+  "author": "Mikko Saari",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/msaari/liikennepoliisi/issues"
+  },
+  "homepage": "https://github.com/msaari/liikennepoliisi#readme"
+}
