@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/msaari/liikennepoliisi/issues"
   },
-  "homepage": "https://github.com/msaari/liikennepoliisi#readme"
+  "homepage": "https://github.com/msaari/liikennepoliisi#readme",
+  "dependencies": {
+    "conf": "^6.2.4",
+    "discord.io": "github:Woor/discord.io#gateway_v6",
+    "winston": "^3.2.1"
+  }
 }
