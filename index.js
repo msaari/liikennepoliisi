@@ -3,7 +3,7 @@ const logger = require("winston")
 const Conf = require("conf")
 const config = new Conf()
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV == "development") {
 	require("dotenv").config()
 }
 
