@@ -1,8 +1,11 @@
 const Discord = require("discord.io")
 const logger = require("winston")
-const auth = require("./auth.json")
 const Conf = require("conf")
 const config = new Conf()
+
+if (process.env.NODE_ENV !== "production") {
+	require("dotenv").config()
+}
 
 logger.remove(logger.transports.Console)
 logger.add(new logger.transports.Console(), {
@@ -11,7 +14,7 @@ logger.add(new logger.transports.Console(), {
 logger.level = "debug"
 
 const bot = new Discord.Client({
-	token: auth.token,
+	token: process.env.BOT_TOKEN,
 	autorun: true,
 })
 
@@ -116,6 +119,24 @@ const removeUserFromQueue = (user, queueName) => {
 	return 1
 }
 
+const sendHelp = (userID) => {
+	const message = `Voit luoda oman jonon komennolla *!jono luo ABCDE n*, missä *ABCDE* on Dodo Code ja n on yhtä aikaa saarelle haluamiesi käyttäjien lukumäärä. Tämä luo jonon, jonka nimeksi tulee Discord-käyttäjätunnuksesi (ei siis nicknamesi palvelimella). Tämä komento kannattaa lähettää botille yksityisviestillä, jotta Dodo Codesi ei näy kanavalla!
+
+Jonoon liitytään komennolla *!jono liity [nimi]*, jolla menet jonon viimeiseksi. Et voi liittyä samaan jonoon kahta kertaa. Jos haluat käydä saarella useamman kerran, sinun tulee liittyä jonoon uudestaan kun olet palannut kotiin ensimmäiseltä käynniltäsi.
+
+Kun jono etenee ja on sinun vuorosi päästä saarelle, saat botilta yksityisviestin, jossa kerrotaan Dodo Code. Nyt sinun pitää siirtyä saarelle mahdollisimman ripeästi. Kun olet lähtenyt lentokentältä, lähetä komento *!jono matkalla*. Kun olet vieraillut saarella ja poistut, lähetä komento *!jono kotiin*. Tämä poistaa sinut jonosta ja vapauttaa paikan seuraavalle jonottajalle.
+
+Jos haluat poistaa jonosi, lähetä komento *!jono poista*. Se hävittää jonosi saman tien, vailla varoitusta ja perumismahdollisuutta, eli käytä harkiten.
+
+Komennolla *!jono näytä [jononnimi]* botti lähettää sinulle viestin, jossa näkyy jonon tilanne tällä hetkellä. Jonottajien nimen perässä on tila, joka voi olla "jonossa", "saanut koodin" tai "saarella".
+
+Jos joku jumittaa jonossa eikä esim. tulekaan saarelle ajoissa tai ei muista poistua jonosta, jonon omistaja voi potkia väkeä jonosta pois komennolla *!jono potkaise [käyttäjä]*. Tämä poistaa nimetyn käyttäjän jonostasi.`
+	bot.sendMessage({
+		to: userID,
+		message,
+	})
+}
+
 bot.on("ready", function (evt) {
 	logger.info("Connected")
 	logger.info("Logged in as: ")
@@ -127,6 +148,10 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 		const args = message.substring(6).split(" ")
 		const cmd = args[0]
 
+		if (!cmd) {
+			sendHelp(userID)
+		}
+
 		const cmdArgs = args.splice(1)
 		let queueName = ""
 		switch (cmd) {
@@ -135,9 +160,10 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 					to: channelID,
 					message: "Pong!",
 				})
+				console.log()
 				break
 			case "luo":
-				const oldQueue = getQueue(user)
+				const oldQueue = getQueue(sanitizeUsername(user))
 				if (oldQueue) {
 					bot.sendMessage({
 						to: userID,
@@ -163,7 +189,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 				}
 				const newQueue = {
 					userID,
-					user,
+					user: sanitizeUsername(user),
 					dodoCode,
 					visitorNumber,
 					visitors: [],
@@ -171,11 +197,13 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 				addQueue(user, newQueue)
 				bot.sendMessage({
 					to: userID,
-					message: `Jono on luotu nimellä *${user}*. Tarkista vielä että meni oikein: Dodo Code on *${dodoCode}* ja kerralla sisään päästetään *${visitorNumber}* vierasta.`,
+					message: `Jono on luotu nimellä *${sanitizeUsername(
+						user
+					)}*. Tarkista vielä että meni oikein: Dodo Code on *${dodoCode}* ja kerralla sisään päästetään *${visitorNumber}* vierasta.`,
 				})
 				break
 			case "poista":
-				const queueToRemove = getQueue(user)
+				const queueToRemove = getQueue(sanitizeUsername(user))
 				if (!queueToRemove) {
 					bot.sendMessage({
 						to: userID,
@@ -183,7 +211,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 					})
 					break
 				}
-				deleteQueue(user)
+				deleteQueue(sanitizeUsername(user))
 				bot.sendMessage({
 					to: userID,
 					message: `Jonosi poistettiin.`,
@@ -268,7 +296,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 				break
 			case "potkaise":
 				userToKick = cmdArgs[0]
-				const queueToKick = getQueue(user)
+				const queueToKick = getQueue(sanitizeUsername(user))
 				if (queueToKick == undefined) {
 					bot.sendMessage({
 						to: userID,
@@ -277,11 +305,16 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 					break
 				}
 
-				const kickResponse = removeUserFromQueue(userToKick, user)
+				const kickResponse = removeUserFromQueue(
+					userToKick,
+					sanitizeUsername(user)
+				)
 				if (kickResponse == 1) {
 					bot.sendMessage({
 						to: userID,
-						message: `Käyttäjä *${userToKick}* poistettiin jonosta *${user}*.`,
+						message: `Käyttäjä *${userToKick}* poistettiin jonosta *${sanitizeUsername(
+							user
+						)}*.`,
 					})
 				}
 				if (kickResponse == -1) {
@@ -303,4 +336,8 @@ const isValidDodoCode = (dodoCode) => {
 const isValidVisitorNumber = (visitorNumber) => {
 	const regex = RegExp("^[0-9]{1,2}$")
 	return regex.test(visitorNumber)
+}
+
+const sanitizeUsername = (username) => {
+	return username.replace(/\s/, "")
 }

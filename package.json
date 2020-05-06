@@ -4,7 +4,8 @@
   "description": "Animal Crossingin Dodo Code -jono",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "NODE_ENV=production node index.js",
+    "watch": "NODE_ENV=development nodemon index.js"
   },
   "repository": {
     "type": "git",
@@ -20,5 +21,9 @@
     "conf": "^6.2.4",
     "discord.io": "github:Woor/discord.io#gateway_v6",
     "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "dotenv": "^8.2.0",
+    "nodemon": "^2.0.3"
   }
 }
