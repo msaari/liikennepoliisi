@@ -2,6 +2,8 @@ const Discord = require("discord.io")
 const logger = require("winston")
 const Conf = require("conf")
 const config = new Conf()
+const express = require("express")
+const app = express()
 
 if (process.env.NODE_ENV == "development") {
 	require("dotenv").config()
@@ -341,3 +343,14 @@ const isValidVisitorNumber = (visitorNumber) => {
 const sanitizeUsername = (username) => {
 	return username.replace(/\s/, "")
 }
+
+app.set("port", process.env.PORT || 5000)
+app.use(express.static(__dirname + "/public"))
+
+app.get("/", function (request, response) {
+	response.send("Hello World!")
+})
+
+app.listen(app.get("port"), function () {
+	console.log("Node app is running at localhost:" + app.get("port"))
+})

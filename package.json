@@ -20,6 +20,7 @@
   "dependencies": {
     "conf": "^6.2.4",
     "discord.io": "github:Woor/discord.io#gateway_v6",
+    "express": "^4.17.1",
     "winston": "^3.2.1"
   },
   "devDependencies": {
